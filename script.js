@@ -1,185 +1,229 @@
-:root {
-    --primary-color: #ffd700;
-    --bg-dark: #0f172a;
-    --board-light: #cbd5e1;
-    --board-dark: #475569;
-    --glass-bg: rgba(30, 41, 59, 0.7);
-    --glass-border: rgba(255, 255, 255, 0.1);
+// ================= 1. المتغيرات والروابط =================
+const boardEl = document.getElementById('board');
+const statusEl = document.getElementById('status');
+const historyEl = document.getElementById('move-history');
+const screens = {
+    start: document.getElementById('start-screen'),
+    gameOver: document.getElementById('game-over-screen')
+};
+
+const game = new Chess();
+let selectedSquare = null;
+let gameMode = 'PVC';
+let lastMoveSquares = [];
+let moveCount = 1;
+
+// المؤقتات
+let timers = { w: 600, b: 600 }; // الثواني
+let timerInterval = null;
+
+// الأصوات
+const sfx = {
+    move: new Audio('https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/move-self.mp3'),
+    capture: new Audio('https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/capture.mp3'),
+    check: new Audio('https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/move-check.mp3'),
+    end: new Audio('https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/game-end.mp3')
+};
+
+const PIECES = { p: '♟', n: '♞', b: '♝', r: '♜', q: '♛', k: '♚', P: '♙', N: '♘', B: '♗', R: '♖', Q: '♕', K: '♔' };
+
+// ================= 2. التهيئة والبدء =================
+document.getElementById('btn-pvp').addEventListener('click', () => initGame('PVP'));
+document.getElementById('btn-pvc').addEventListener('click', () => initGame('PVC'));
+
+function initGame(mode) {
+    gameMode = mode;
+    const mins = parseInt(document.getElementById('time-input').value) || 10;
+    timers = { w: mins * 60, b: mins * 60 };
+    
+    screens.start.classList.add('hidden');
+    updateTimerDisplay();
+    startClocks();
+    renderBoard();
+    updateStatus('بدأت المعركة - دور الأبيض');
 }
 
-body {
-    background: radial-gradient(circle at center, #1e293b 0%, #020617 100%);
-    color: #fff;
-    font-family: 'Segoe UI', system-ui, sans-serif;
-    margin: 0;
-    height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    overflow: hidden;
+// ================= 3. إدارة المؤقتات =================
+function startClocks() {
+    if (timerInterval) clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
+        if (game.game_over()) return clearInterval(timerInterval);
+        const turn = game.turn();
+        timers[turn]--;
+        updateTimerDisplay();
+        
+        if (timers[turn] <= 0) {
+            clearInterval(timerInterval);
+            endGame(`نفد الوقت! انتصر السلطان ${turn === 'w' ? 'الأسود' : 'الأبيض'}`);
+        }
+    }, 1000);
 }
 
-/* تأثير الزجاج الحديث (Glassmorphism) */
-.glass-panel {
-    background: var(--glass-bg);
-    backdrop-filter: blur(10px);
-    border: 1px solid var(--glass-border);
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+function updateTimerDisplay() {
+    const format = (t) => `${Math.floor(t / 60).toString().padStart(2, '0')}:${(t % 60).toString().padStart(2, '0')}`;
+    document.getElementById('timer-white').innerText = format(timers.w);
+    document.getElementById('timer-black').innerText = format(timers.b);
 }
 
-.overlay {
-    position: absolute;
-    inset: 0;
-    z-index: 100;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+// ================= 4. رسم الرقعة والواجهة =================
+function renderBoard() {
+    boardEl.innerHTML = '';
+    const state = game.board();
+
+    for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+            const sq = document.createElement('div');
+            const file = String.fromCharCode(97 + c);
+            const rank = 8 - r;
+            const id = file + rank;
+            
+            sq.className = `square ${(r + c) % 2 === 0 ? 'white' : 'black'}`;
+            if (id === selectedSquare) sq.classList.add('selected');
+            if (lastMoveSquares.includes(id)) sq.classList.add('last-move');
+
+            const piece = state[r][c];
+            if (piece) {
+                const pEl = document.createElement('span');
+                pEl.className = 'piece';
+                pEl.style.color = piece.color === 'w' ? '#fff' : '#000';
+                pEl.innerText = PIECES[piece.color === 'w' ? piece.type.toUpperCase() : piece.type];
+                sq.appendChild(pEl);
+            }
+
+            sq.addEventListener('click', () => handleSquareClick(id));
+            boardEl.appendChild(sq);
+        }
+    }
+    updateCapturedPieces();
 }
 
-.hidden { display: none !important; }
-
-/* القائمة والأزرار */
-.menu {
-    text-align: center;
-    padding: 40px;
-    border-radius: 20px;
-    width: 90%;
-    max-width: 500px;
+function updateCapturedPieces() {
+    const history = game.history({ verbose: true });
+    let capW = '', capB = '';
+    history.forEach(m => {
+        if (m.captured) {
+            const icon = PIECES[m.color === 'w' ? m.captured : m.captured.toUpperCase()];
+            m.color === 'w' ? capW += icon : capB += icon;
+        }
+    });
+    document.getElementById('captured-by-white').innerText = capW; // الأبيض يأكل الأسود
+    document.getElementById('captured-by-black').innerText = capB; // الأسود يأكل الأبيض
 }
 
-.main-title {
-    color: var(--primary-color);
-    font-size: clamp(32px, 5vw, 48px);
-    margin: 0 0 10px 0;
-    text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+function addMoveToHistory(move) {
+    const li = document.createElement('li');
+    li.innerHTML = `<span>${moveCount}.</span> ${move.color === 'w' ? 'الأبيض' : 'الأسود'} نقل إلى ${move.to}`;
+    historyEl.prepend(li);
+    if (move.color === 'b') moveCount++;
 }
 
-.subtitle { color: #94a3b8; font-size: 20px; margin-bottom: 30px; }
+// ================= 5. منطق اللعب والتفاعلات =================
+function handleSquareClick(id) {
+    if (game.game_over() || (gameMode === 'PVC' && game.turn() === 'b')) return;
 
-.buttons-container { display: flex; flex-direction: column; gap: 15px; }
-
-.epic-btn {
-    padding: 15px 20px;
-    font-size: 18px;
-    background: linear-gradient(45deg, #7f1d1d, #b91c1c);
-    color: white;
-    border: 1px solid var(--primary-color);
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: bold;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    if (selectedSquare) {
+        const move = game.move({ from: selectedSquare, to: id, promotion: 'q' });
+        if (move) {
+            processValidMove(move);
+            if (gameMode === 'PVC' && !game.game_over()) {
+                updateStatus('الذكاء الاصطناعي يخطط...');
+                setTimeout(makeAIMove, 500);
+            }
+        } else {
+            const p = game.get(id);
+            selectedSquare = (p && p.color === game.turn()) ? id : null;
+            renderBoard();
+        }
+    } else {
+        const p = game.get(id);
+        if (p && p.color === game.turn()) {
+            selectedSquare = id;
+            renderBoard();
+        }
+    }
 }
 
-.epic-btn:hover {
-    transform: translateY(-3px) scale(1.02);
-    box-shadow: 0 10px 20px rgba(220, 38, 38, 0.4);
+function processValidMove(move) {
+    lastMoveSquares = [move.from, move.to];
+    selectedSquare = null;
+    addMoveToHistory(move);
+    triggerVFX(move);
+    renderBoard();
+    checkGameState();
 }
 
-.settings { margin-top: 20px; font-size: 18px; }
-.settings input { width: 60px; padding: 5px; border-radius: 5px; text-align: center; font-size: 16px;}
-
-/* هيكل ساحة المعركة الرئيسي */
-#game-wrapper {
-    display: flex;
-    gap: 20px;
-    width: 95vw;
-    max-width: 1200px;
-    height: 90vh;
-    flex-wrap: wrap;
-    justify-content: center;
-    align-items: flex-start;
+function triggerVFX(move) {
+    if (move.captured) {
+        sfx.capture.play();
+        boardEl.classList.remove('cinematic-shake');
+        void boardEl.offsetWidth; 
+        boardEl.classList.add('cinematic-shake');
+    } else {
+        sfx.move.play();
+    }
 }
 
-/* اللوحة الجانبية (التاريخ والمؤقتات) */
-.side-panel {
-    flex: 1;
-    min-width: 250px;
-    max-width: 350px;
-    height: 100%;
-    border-radius: 15px;
-    display: flex;
-    flex-direction: column;
-    padding: 20px;
-    box-sizing: border-box;
+// ================= 6. الذكاء الاصطناعي المتقدم =================
+function evaluateBoard(board) {
+    const values = { p: 10, n: 30, b: 30, r: 50, q: 90, k: 900 };
+    let score = 0;
+    for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+            const p = board[r][c];
+            if (p) {
+                const val = values[p.type];
+                score += p.color === 'b' ? val : -val; // الأسود يسعى لتعظيم الرقم
+            }
+        }
+    }
+    return score;
 }
 
-.timer {
-    font-size: 32px;
-    font-weight: bold;
-    font-family: monospace;
-    background: rgba(0,0,0,0.5);
-    padding: 10px;
-    border-radius: 8px;
-    text-align: center;
-    margin: 10px 0;
-    color: var(--primary-color);
+function makeAIMove() {
+    if (game.game_over()) return;
+    const moves = game.moves({ verbose: true });
+    
+    // خوارزمية بحث (مبسطة لتقييم النقلة الحالية)
+    let bestMove = null;
+    let bestScore = -Infinity;
+
+    moves.forEach(m => {
+        game.move(m.san);
+        // تقييم الرقعة بعد الحركة
+        const score = evaluateBoard(game.board()) + (m.captured ? 5 : 0); // مكافأة على الأكل
+        if (score > bestScore) {
+            bestScore = score;
+            bestMove = m;
+        }
+        game.undo(); // إرجاع النقلة الوهمية
+    });
+
+    if (!bestMove) bestMove = moves[Math.floor(Math.random() * moves.length)];
+    
+    const actualMove = game.move(bestMove.san);
+    processValidMove(actualMove);
 }
 
-.captured-pieces { min-height: 30px; font-size: 24px; display: flex; flex-wrap: wrap; gap: 5px; }
-
-.move-history-container {
-    flex-grow: 1;
-    overflow-y: auto;
-    background: rgba(0,0,0,0.3);
-    border-radius: 8px;
-    padding: 10px;
-    margin: 15px 0;
+// ================= 7. حالات النهاية =================
+function checkGameState() {
+    if (game.game_over()) {
+        sfx.end.play();
+        clearInterval(timerInterval);
+        if (game.in_checkmate()) endGame(`انتصر ${game.turn() === 'w' ? 'الأسود' : 'الأبيض'} بكش ملك!`);
+        else if (game.in_draw()) endGame("انتهت المعركة بالتعادل (هدنة).");
+        else endGame("انتهت اللعبة!");
+    } else if (game.in_check()) {
+        sfx.check.play();
+        updateStatus("⚠️ السلطان في خطر (كش) ⚠️");
+    } else {
+        updateStatus(`دور السلطان ${game.turn() === 'w' ? 'الأبيض' : 'الأسود'}`);
+    }
 }
 
-#move-history { list-style: none; padding: 0; margin: 0; }
-#move-history li {
-    padding: 5px;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
-    font-family: monospace;
-    font-size: 16px;
-}
-#move-history li span { color: var(--primary-color); display: inline-block; width: 30px; }
+function updateStatus(msg) { document.getElementById('status').innerText = msg; }
 
-/* الرقعة */
-.board-container {
-    padding: 20px;
-    border-radius: 15px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-.status-text { font-size: 24px; font-weight: bold; margin: 0 0 15px 0; color: #f8fafc; }
-
-.board {
-    display: grid;
-    grid-template-columns: repeat(8, 1fr);
-    width: 75vmin;
-    max-width: 600px;
-    height: 75vmin;
-    max-height: 600px;
-    border: 4px solid #334155;
-    box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
-}
-
-.square { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; font-size: clamp(30px, 7vmin, 60px); cursor: pointer; user-select: none; position: relative; }
-.white { background-color: var(--board-light); }
-.black { background-color: var(--board-dark); }
-.selected { background-color: rgba(234, 179, 8, 0.6) !important; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); }
-.last-move { background-color: rgba(132, 204, 22, 0.4); }
-
-.piece { text-shadow: 2px 4px 6px rgba(0,0,0,0.6); pointer-events: none; transition: transform 0.2s; }
-
-/* مؤثرات الانفجار والاهتزاز */
-@keyframes shake-and-bleed {
-    0% { transform: translate(2px, 2px); box-shadow: inset 0 0 30px red; }
-    20% { transform: translate(-4px, 0px); box-shadow: inset 0 0 50px darkred; }
-    40% { transform: translate(4px, -2px); box-shadow: inset 0 0 80px red; }
-    60% { transform: translate(-4px, 2px); box-shadow: inset 0 0 50px darkred; }
-    80% { transform: translate(-2px, -2px); box-shadow: inset 0 0 30px red; }
-    100% { transform: translate(0px, 0px); }
-}
-.cinematic-shake { animation: shake-and-bleed 0.5s ease-in-out; }
-
-/* التجاوب مع شاشات الموبايل */
-@media (max-width: 800px) {
-    #game-wrapper { flex-direction: column; overflow-y: auto; height: 100vh; justify-content: flex-start; }
-    .side-panel { width: 100%; max-width: 100%; min-height: 300px; }
-    .board-container { width: 100%; padding: 10px; }
-    .board { width: 90vw; height: 90vw; }
+function endGame(msg) {
+    screens.gameOver.classList.remove('hidden');
+    document.getElementById('winner-text').innerText = msg;
+    document.getElementById('reason-text').innerText = "المعركة القادمة تنتظر...";
 }
