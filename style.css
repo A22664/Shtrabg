@@ -1,0 +1,116 @@
+/* الإعدادات العامة والخلفية */
+body {
+    background-color: #0d0d0d;
+    color: #fff;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    overflow: hidden;
+}
+
+/* شاشة البداية */
+.overlay {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+}
+
+.start-button {
+    padding: 20px 40px;
+    font-size: 24px;
+    background-color: #8B0000;
+    color: white;
+    border: 2px solid #ffd700;
+    cursor: pointer;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    font-family: inherit;
+    font-weight: bold;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+.start-button:hover {
+    background-color: #ff0000;
+    box-shadow: 0 0 30px #ff0000;
+    transform: scale(1.1);
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* النصوص التوضيحية */
+.title {
+    text-align: center;
+    color: #ffd700;
+    text-shadow: 0 0 15px rgba(255, 215, 0, 0.7);
+    margin-bottom: 15px;
+    font-size: 32px;
+}
+
+.status-text {
+    text-align: center;
+    font-size: 22px;
+    margin-top: 15px;
+    color: #ddd;
+    font-weight: bold;
+}
+
+/* رقعة الشطرنج */
+.board {
+    display: grid;
+    grid-template-columns: repeat(8, 70px);
+    grid-template-rows: repeat(8, 70px);
+    border: 6px solid #2a2a2a;
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.8);
+    background-color: #222;
+}
+
+.square {
+    width: 70px;
+    height: 70px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 50px;
+    cursor: pointer;
+    user-select: none;
+}
+
+/* ألوان المربعات */
+.white { background-color: #d1bfae; }
+.black { background-color: #5e4028; }
+
+/* تأثير اختيار القطعة */
+.selected {
+    background-color: rgba(255, 215, 0, 0.6) !important;
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+}
+
+/* القطع */
+.piece {
+    text-shadow: 2px 4px 6px rgba(0,0,0,0.8);
+    pointer-events: none; /* يمنع النقر الخاطئ على النص بدلاً من المربع */
+    transition: transform 0.2s ease;
+}
+
+/* 🎬 الأنيميشن السينمائي عند الأكل (الاهتزاز والوميض الأحمر) 🎬 */
+@keyframes shake-and-bleed {
+    0% { transform: translate(2px, 2px); box-shadow: 0 0 50px red; }
+    20% { transform: translate(-4px, 0px); box-shadow: 0 0 80px darkred; }
+    40% { transform: translate(4px, -2px); box-shadow: 0 0 100px red; }
+    60% { transform: translate(-4px, 2px); box-shadow: 0 0 80px darkred; }
+    80% { transform: translate(-2px, -2px); box-shadow: 0 0 50px red; }
+    100% { transform: translate(0px, 0px); box-shadow: 0 0 40px rgba(0, 0, 0, 0.8); }
+}
+
+.cinematic-shake {
+    animation: shake-and-bleed 0.5s ease-in-out;
+}
