@@ -3,14 +3,14 @@
     --bg-dark: #0f172a;
     --board-light: #cbd5e1;
     --board-dark: #475569;
-    --glass-bg: rgba(30, 41, 59, 0.7);
-    --glass-border: rgba(255, 255, 255, 0.1);
+    --glass-bg: rgba(30, 41, 59, 0.75);
+    --glass-border: rgba(255, 255, 255, 0.15);
 }
 
 body {
     background: radial-gradient(circle at center, #1e293b 0%, #020617 100%);
     color: #fff;
-    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     margin: 0;
     height: 100vh;
     display: flex;
@@ -19,12 +19,13 @@ body {
     overflow: hidden;
 }
 
-/* تأثير الزجاج الحديث (Glassmorphism) */
+/* تأثير الزجاج */
 .glass-panel {
     background: var(--glass-bg);
-    backdrop-filter: blur(10px);
+    backdrop-filter: blur(12px);
     border: 1px solid var(--glass-border);
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+    border-radius: 15px;
 }
 
 .overlay {
@@ -34,15 +35,15 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
+    background: rgba(0, 0, 0, 0.85);
 }
 
 .hidden { display: none !important; }
 
-/* القائمة والأزرار */
+/* القائمة الرئيسية */
 .menu {
     text-align: center;
     padding: 40px;
-    border-radius: 20px;
     width: 90%;
     max-width: 500px;
 }
@@ -55,7 +56,6 @@ body {
 }
 
 .subtitle { color: #94a3b8; font-size: 20px; margin-bottom: 30px; }
-
 .buttons-container { display: flex; flex-direction: column; gap: 15px; }
 
 .epic-btn {
@@ -67,39 +67,36 @@ body {
     border-radius: 8px;
     cursor: pointer;
     font-weight: bold;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.3s ease;
 }
 
 .epic-btn:hover {
     transform: translateY(-3px) scale(1.02);
-    box-shadow: 0 10px 20px rgba(220, 38, 38, 0.4);
+    box-shadow: 0 10px 20px rgba(220, 38, 38, 0.5);
 }
 
 .settings { margin-top: 20px; font-size: 18px; }
 .settings input { width: 60px; padding: 5px; border-radius: 5px; text-align: center; font-size: 16px;}
 
-/* هيكل ساحة المعركة الرئيسي */
+/* ========================================= */
+/* تقسيم الشاشة الجديد والصارم (Grid Layout) */
+/* ========================================= */
 #game-wrapper {
-    display: flex;
-    gap: 20px;
+    display: grid;
+    /* تقسيم الشاشة: 320 بكسل للقائمة الجانبية، والباقي للرقعة */
+    grid-template-columns: 320px 1fr; 
+    gap: 30px;
     width: 95vw;
-    max-width: 1200px;
+    max-width: 1400px;
     height: 90vh;
-    flex-wrap: wrap;
-    justify-content: center;
-    align-items: flex-start;
 }
 
-/* اللوحة الجانبية (التاريخ والمؤقتات) */
+/* اللوحة الجانبية (يمين) */
 .side-panel {
-    flex: 1;
-    min-width: 250px;
-    max-width: 350px;
-    height: 100%;
-    border-radius: 15px;
     display: flex;
     flex-direction: column;
     padding: 20px;
+    height: 100%;
     box-sizing: border-box;
 }
 
@@ -107,79 +104,113 @@ body {
     font-size: 32px;
     font-weight: bold;
     font-family: monospace;
-    background: rgba(0,0,0,0.5);
+    background: rgba(0,0,0,0.6);
     padding: 10px;
     border-radius: 8px;
     text-align: center;
     margin: 10px 0;
     color: var(--primary-color);
+    border: 1px solid rgba(255,215,0,0.2);
 }
 
-.captured-pieces { min-height: 30px; font-size: 24px; display: flex; flex-wrap: wrap; gap: 5px; }
+.captured-pieces { 
+    min-height: 40px; 
+    font-size: 24px; 
+    display: flex; 
+    flex-wrap: wrap; 
+    gap: 5px; 
+}
 
 .move-history-container {
     flex-grow: 1;
     overflow-y: auto;
-    background: rgba(0,0,0,0.3);
+    background: rgba(0,0,0,0.4);
     border-radius: 8px;
-    padding: 10px;
+    padding: 15px;
     margin: 15px 0;
+    border: 1px solid var(--glass-border);
 }
 
 #move-history { list-style: none; padding: 0; margin: 0; }
 #move-history li {
-    padding: 5px;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding: 8px 5px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
     font-family: monospace;
     font-size: 16px;
 }
-#move-history li span { color: var(--primary-color); display: inline-block; width: 30px; }
+#move-history li span { color: var(--primary-color); display: inline-block; width: 35px; }
 
-/* الرقعة */
+/* منطقة الرقعة (يسار) */
 .board-container {
-    padding: 20px;
-    border-radius: 15px;
     display: flex;
     flex-direction: column;
+    justify-content: center;
     align-items: center;
+    height: 100%;
+    padding: 20px;
+    box-sizing: border-box;
 }
 
-.status-text { font-size: 24px; font-weight: bold; margin: 0 0 15px 0; color: #f8fafc; }
+.status-text { 
+    font-size: 26px; 
+    font-weight: bold; 
+    margin: 0 0 20px 0; 
+    color: #f8fafc; 
+    text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+}
 
+/* الرقعة نفسها */
 .board {
     display: grid;
     grid-template-columns: repeat(8, 1fr);
-    width: 75vmin;
-    max-width: 600px;
-    height: 75vmin;
-    max-height: 600px;
-    border: 4px solid #334155;
-    box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
+    grid-template-rows: repeat(8, 1fr);
+    /* الحفاظ على شكل المربع دائماً */
+    aspect-ratio: 1 / 1;
+    /* الطول يأخذ 75% من الشاشة لترك مساحة للنصوص */
+    height: 75vh; 
+    max-height: 700px;
+    border: 6px solid #1e293b;
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.8);
+    background-color: #222;
 }
 
-.square { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; font-size: clamp(30px, 7vmin, 60px); cursor: pointer; user-select: none; position: relative; }
+.square { 
+    width: 100%; 
+    height: 100%; 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    font-size: clamp(30px, 6vh, 70px); 
+    cursor: pointer; 
+    user-select: none; 
+}
+
 .white { background-color: var(--board-light); }
 .black { background-color: var(--board-dark); }
-.selected { background-color: rgba(234, 179, 8, 0.6) !important; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); }
-.last-move { background-color: rgba(132, 204, 22, 0.4); }
-
-.piece { text-shadow: 2px 4px 6px rgba(0,0,0,0.6); pointer-events: none; transition: transform 0.2s; }
+.selected { background-color: rgba(234, 179, 8, 0.7) !important; box-shadow: inset 0 0 25px rgba(0,0,0,0.6); }
+.last-move { background-color: rgba(132, 204, 22, 0.5); }
+.piece { text-shadow: 2px 5px 8px rgba(0,0,0,0.7); pointer-events: none; transition: transform 0.2s; }
 
 /* مؤثرات الانفجار والاهتزاز */
 @keyframes shake-and-bleed {
-    0% { transform: translate(2px, 2px); box-shadow: inset 0 0 30px red; }
-    20% { transform: translate(-4px, 0px); box-shadow: inset 0 0 50px darkred; }
-    40% { transform: translate(4px, -2px); box-shadow: inset 0 0 80px red; }
-    60% { transform: translate(-4px, 2px); box-shadow: inset 0 0 50px darkred; }
-    80% { transform: translate(-2px, -2px); box-shadow: inset 0 0 30px red; }
+    0% { transform: translate(3px, 3px); box-shadow: inset 0 0 40px red; }
+    20% { transform: translate(-5px, 0px); box-shadow: inset 0 0 60px darkred; }
+    40% { transform: translate(5px, -3px); box-shadow: inset 0 0 90px red; }
+    60% { transform: translate(-5px, 3px); box-shadow: inset 0 0 60px darkred; }
+    80% { transform: translate(-3px, -3px); box-shadow: inset 0 0 40px red; }
     100% { transform: translate(0px, 0px); }
 }
 .cinematic-shake { animation: shake-and-bleed 0.5s ease-in-out; }
 
-/* التجاوب مع شاشات الموبايل */
-@media (max-width: 800px) {
-    #game-wrapper { flex-direction: column; overflow-y: auto; height: 100vh; justify-content: flex-start; }
-    .side-panel { width: 100%; max-width: 100%; min-height: 300px; }
-    .board-container { width: 100%; padding: 10px; }
-    .board { width: 90vw; height: 90vw; }
+/* التجاوب التلقائي مع شاشات الموبايل (طولية) */
+@media (max-width: 900px) {
+    #game-wrapper { 
+        grid-template-columns: 1fr; /* تغيير التقسيم ليصبح عمودياً على الموبايل */
+        grid-template-rows: auto 1fr;
+        height: auto;
+        overflow-y: auto;
+    }
+    .side-panel { height: 400px; order: 2; }
+    .board-container { order: 1; height: auto; }
+    .board { width: 95vw; height: auto; }
 }
