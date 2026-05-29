@@ -3,21 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>شطرنج سينمائي - حرب السلاطين</title>
+    <title>شطرنج سينمائي - النسخة الاحترافية</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
 </head>
 <body>
-    <div id="start-screen" class="overlay">
-        <button id="start-btn" class="start-button">⚔️ ادخل ساحة المعركة ⚔️</button>
+    <div id="start-screen" class="overlay glass-panel">
+        <div class="menu">
+            <h1 class="main-title">حرب السلاطين</h1>
+            <p class="subtitle">النسخة الملحمية</p>
+            <div class="buttons-container">
+                <button id="btn-pvp" class="btn epic-btn">⚔️ لاعب ضد لاعب (نفس الشاشة)</button>
+                <button id="btn-pvc" class="btn epic-btn">🤖 لاعب ضد الذكاء الاصطناعي</button>
+            </div>
+            <div class="settings">
+                <label>⏱️ وقت المباراة (دقائق):</label>
+                <input type="number" id="time-input" value="10" min="1" max="60">
+            </div>
+        </div>
     </div>
 
-    <div id="game-container">
-        <h1 class="title">حرب السلاطين</h1>
-        <div id="board" class="board"></div>
-        <p id="status" class="status-text">تجهيز الجيوش...</p>
+    <div id="game-over-screen" class="overlay glass-panel hidden">
+        <div class="menu">
+            <h2 id="winner-text" class="main-title"></h2>
+            <p id="reason-text" class="subtitle"></p>
+            <button onclick="location.reload()" class="btn epic-btn">🔄 خوض معركة جديدة</button>
+        </div>
     </div>
-    
+
+    <div id="game-wrapper">
+        <aside class="side-panel glass-panel">
+            <div class="player-info opponent-info">
+                <h3>السلطان الأسود</h3>
+                <div id="timer-black" class="timer">10:00</div>
+                <div id="captured-by-white" class="captured-pieces"></div>
+            </div>
+
+            <div class="move-history-container">
+                <h3>📜 سجل المعركة</h3>
+                <ul id="move-history"></ul>
+            </div>
+
+            <div class="player-info player-info-bottom">
+                <h3>السلطان الأبيض</h3>
+                <div id="timer-white" class="timer">10:00</div>
+                <div id="captured-by-black" class="captured-pieces"></div>
+            </div>
+        </aside>
+
+        <main class="board-container glass-panel">
+            <p id="status" class="status-text">تجهيز الجيوش...</p>
+            <div id="board" class="board"></div>
+        </main>
+    </div>
+
     <script src="script.js"></script>
 </body>
 </html>
